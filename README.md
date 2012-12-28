@@ -9,5 +9,5 @@ there really isn't one)
 
 To start brute-forcing, run:
 
-mvn clean install
-mvn exec:java -Dexec.mainClass=spinpossible.Spinpossible
+    mvn clean install
+    mvn exec:java -Dexec.mainClass=spinpossible.Spinpossible
