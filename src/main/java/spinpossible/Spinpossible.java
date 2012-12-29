@@ -1,37 +1,85 @@
 package spinpossible;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 
 public class Spinpossible {
 
 	int[][] board;
+    int[][] bestSolution;
+    int maxMoves;
+
 	long last;
 	long solveCalls = 0;
 
-  public static final MAX_MOVES = 5;
-
-	public static void main(String[] args) {
-		int[][] board = new int[][] { { 4, 2, 3 }, { 1, 5, 9 }, { 7, 8, 6 } };
-		Spinpossible s = new Spinpossible(board);
-
-		s.solve();
-		System.out.println("done (no solution found)");
+    public static void main(String[] args) {
+        for (String arg: args) {
+            Spinpossible s = loadLevel(new File(arg));
+            System.out.println("Trying to find best solution for\n" + formatBoard(s.board));
+            int moves[][] = s.solve();
+            if (moves == null) {
+                System.out.println("Found no solution for " + arg);
+            } else {
+                System.out.println("Best solution for solving " + arg + ":");
+                System.out.println(formatMoves(moves));
+            }
+        }
 	}
 
-	public Spinpossible(int[][] board) {
+    private static Spinpossible loadLevel(File file) {
+        BufferedReader reader = null;
+        List<int[]> board = new ArrayList<int[]>();
+        int maxMoves = 0;
+
+        try {
+            reader = new BufferedReader(new FileReader(file));
+
+            maxMoves = Integer.parseInt(reader.readLine());
+
+            for (int i = 0; i<3; i++) {
+                String line = reader.readLine().trim();
+                String[] cells = line.split(" +");
+
+                int[] intCells = new int[cells.length];
+                for (int j = 0; j < cells.length; j++) {
+                    intCells[j] = Integer.parseInt(cells[j]);
+                }
+                board.add(intCells);
+            }
+
+        } catch (IOException e) {
+
+            if (reader != null) { try {reader.close();} catch (Exception e2) {} }
+        }
+
+        int [][] sboard = board.toArray(new int[][] {});
+        return new Spinpossible(sboard, maxMoves);
+    }
+
+    public Spinpossible(int[][] board, int maxMoves) {
 		this.board = board;
+        this.maxMoves = maxMoves;
 		last = System.currentTimeMillis();
 	}
 
-	public void solve() {
-		List moves = new ArrayList();
-		solve(moves);
+	public int[][] solve() {
+        bestSolution = null;
+		solve(new ArrayList());
+        return bestSolution;
 	}
 
-	public void solve(List moves) {
+    public void solve(List moves) {
+        //TODO: avoid solutions with unnecesary steps
+        /*if (bestSolution != null && bestSolution.length <= maxMoves) {
+            return;
+        }*/
 		solveCalls++;
-		if (moves.size() > MAX_MOVES) {
+		if (moves.size() > maxMoves) {
 			return;
 		}
 
@@ -44,13 +92,15 @@ public class Spinpossible {
 		}
 
 		if (isSolved()) {
-			System.out.println("solution:");
-			printBoard();
-			printMoves(moves);
-			System.exit(0);
+			if (bestSolution == null || moves.size() < bestSolution.length) {
+                System.out.println("Found a " + moves.size() + " move solution:");
+                printMoves(moves);
+                bestSolution = (int[][]) moves.toArray(new int[][] {});
+                return; // this prevents us from looking for solutions with more moves than bestSolution
+            }
 		}
 
-		if (moves.size() == MAX_MOVES) {
+		if (moves.size() == maxMoves) {
 			return;
 		}
 
@@ -135,13 +185,21 @@ public class Spinpossible {
 	}
 
 	public void printBoard() {
-		for (int row = 0; row < 3; row++) {
-			System.out.printf("%2d %2d %2d\n", board[row][0], board[row][1],
-					board[row][2]);
-		}
-	}
+        System.out.println(formatBoard(board));
+    }
 
-	public String formatMoves(int[] ... moves) {
+    private static String formatBoard(int[][] board) {
+        StringBuilder b = new StringBuilder();
+        for (int r = 0; r < 3; r++) {
+            b.append(String.format(" * %2d %2d %2d *\n", board[r][0], board[r][1], board[r][2]));
+        }
+        return b.toString();
+    }
+
+    public static String formatMoves(List<int[][]> moves) {
+        return formatMoves(moves.toArray(new int[moves.size()][]));
+    }
+	public static String formatMoves(int[] ... moves) {
 		StringBuilder b = new StringBuilder();
 
 		for (int r = 0; r < 3; r++) {
@@ -160,7 +218,7 @@ public class Spinpossible {
 		return b.toString();
 	}
 
-	public void printMoves(List<int[]> moves) {
+	public void printMoves(List<int[][]> moves) {
 		System.out.println(formatMoves((int[][]) moves.toArray(new int[moves.size()][])));
 	}
 	public void printMoves(int[] ... moves) {

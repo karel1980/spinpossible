@@ -10,4 +10,7 @@ there really isn't one)
 To start brute-forcing, run:
 
     mvn clean install
-    mvn exec:java -Dexec.mainClass=spinpossible.Spinpossible
+    mvn exec:java -Dexec.mainClass=spinpossible.Spinpossible -Dexec.arguments=levels/training3.lvl
+
+[TODO] add the actual level
+[TODO] incrementally increase maxdepth until solution is found. regular depth first makes no sense here
